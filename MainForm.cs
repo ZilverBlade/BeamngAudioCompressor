@@ -21,9 +21,6 @@ namespace BeamngAudioCompressor
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-            txtBoxSrcFolder.Text = "D:\\Directories\\Documents\\AsphaltAcademy";
-            txtBoxTgtFolder.Text = "D:\\Directories\\Documents\\AsphaltAcademy\\testtarget";
-            txtBoxPrefixName.Text = "paSfx_";
         }
         private void sliderOggQuality_ValueChanged(object sender, EventArgs e)
         {
