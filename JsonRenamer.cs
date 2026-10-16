@@ -145,7 +145,7 @@ namespace BeamngAudioCompressor
                 string targetDir = $@"{_settings.TargetVehiclesPath}\{data.Name}";
                 if (!Directory.Exists(targetDir))
                     Directory.CreateDirectory(targetDir);
-                File.WriteAllText($@"{_settings.TargetVehiclesPath}\{data.Name}\camso_engine.beam", data.jbeamTxt);
+                File.WriteAllText($@"{_settings.TargetVehiclesPath}\{data.Name}\camso_engine.jbeam", data.jbeamTxt);
             }
 
             if (!Directory.Exists(_settings.TargetArtPath))
@@ -170,7 +170,23 @@ namespace BeamngAudioCompressor
                     string targetFile = $@"{_settings.TargetArtPath}\sound\blends\{newName}.sfxBlend2D.json";
                     try
                     {
-                        File.Copy(sourceFile, targetFile);
+                        if (File.Exists(targetFile))
+                        {
+                            throw new IOException("File already exists");
+                        }
+
+                        Directory.CreateDirectory(Path.GetDirectoryName(targetFile));
+
+                        string jsonContent = File.ReadAllText(sourceFile);
+
+                        string updatedJson = Regex.Replace(
+                            jsonContent,
+                            @"\.(wav|mp3|flac|aac|wma|aiff)\b",
+                            ".ogg",
+                            RegexOptions.IgnoreCase
+                        );
+
+                        File.WriteAllText(targetFile, updatedJson);
                     }
                     catch (Exception)
                     {

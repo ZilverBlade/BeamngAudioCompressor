@@ -35,6 +35,8 @@ namespace BeamngAudioCompressor
     {
         long oldSize = 0;
         long newSize = 0;
+        long numCompleted = 0;
+        int numFiles = 0;
         private static string GetRelativePath(string relativeTo, string path)
         {
             // Ensure the base directory ends with a directory separator so Uri treats it as a container folder
@@ -100,14 +102,14 @@ namespace BeamngAudioCompressor
             {
                 _progressCb?.Invoke($"Loading {dir}", _currentProgress);
                 CompressAllFilesUnderDir(Path.GetFileName(dir));
-                _currentProgress = i++ / dirCount;
+                _currentProgress = i++ / dirCount * 0.5f;
             }
 
             // Wait for all async FFmpeg tasks to complete
             Task.WaitAll(_tasks.ToArray());
             _currentProgress = 1.0f;
             _progressCb?.Invoke($"Done (compressed {_tasks.Count} audio files)", _currentProgress);
-            _progressCb?.Invoke($"{((double)oldSize/ newSize):F2}x reduction", _currentProgress);
+            _progressCb?.Invoke($"{((double)oldSize / newSize):F2}x reduction", _currentProgress);
             _progressCb?.Invoke($"{((double)oldSize / (1 << 20)):F1} MiB -> {((double)newSize / (1 << 20)):F1} MiB", _currentProgress);
         }
 
@@ -120,14 +122,16 @@ namespace BeamngAudioCompressor
                 string extension = Path.GetExtension(file);
                 string relativePath = GetRelativePath(enumerateDir, file);
 
+                string fileName = file.Substring(file.LastIndexOfAny(new char[] { '\\', '/' }));
                 if (CompressibleAudioExtensions.Contains(extension))
                 {
-                    _progressCb?.Invoke($"Queuing audio task {file}", _currentProgress);
+                    ++numFiles;
+                    //_progressCb?.Invoke($"Queuing audio task {fileName}", _currentProgress);
                     CompressAudioFile(destDirName, file, relativePath);
                 }
                 else
                 {
-                    _progressCb?.Invoke($"Copying non-audio file {file}", _currentProgress);
+                    _progressCb?.Invoke($"Copying non-audio file {fileName}", _currentProgress);
                     // Copy non-audio files (or already .ogg files) directly to preserve file integrity
                     CopyNonAudioFile(destDirName, file, relativePath);
                 }
@@ -156,7 +160,7 @@ namespace BeamngAudioCompressor
                 await _throttle.WaitAsync().ConfigureAwait(false);
                 try
                 {
-                    _progressCb?.Invoke($"Compressing audio task {sourceFilePath}", _currentProgress);
+                    _progressCb?.Invoke($"Compressing audio task {sourceFilePath.Substring(sourceFilePath.LastIndexOfAny(new char[] { '\\', '/' }))} {numCompleted} / {numFiles}", _currentProgress + numCompleted / (float)numFiles);
                     await ConvertToOggAsync(sourceFilePath, outputFilePath, _settings.OggQuality).ConfigureAwait(false);
                 }
                 finally
@@ -222,6 +226,7 @@ namespace BeamngAudioCompressor
             long newLength = new FileInfo(outputPath).Length;
             Interlocked.Add(ref oldSize, oldLength);
             Interlocked.Add(ref newSize, newLength);
+            Interlocked.Add(ref numCompleted, 1);
         }
     }
 }

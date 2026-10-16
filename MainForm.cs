@@ -90,6 +90,8 @@ namespace BeamngAudioCompressor
                  dlg.PushText(msg);
                  dlg.UpdateProgress(prog);
              });
+            dlg.UpdateProgress(1.0f);
+            dlg.EnableBtn();
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
